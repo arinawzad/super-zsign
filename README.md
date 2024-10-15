@@ -1,4 +1,4 @@
-## support remove emmbedded.mobileprovision  add by <font color=#FF0000 size=5>🌟**star**🌟</font> [Me](https://t.me/ferkaribokurd11).
+## support remove emmbedded.mobileprovision  add by <font color=#FF0000 size=5></font> [ıɹɐ](https://t.me/ari_m1).
 
 
 
