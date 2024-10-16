@@ -127,6 +127,21 @@ bool ZAppBundle::GetObjectsToSign(const string &strFolder, JValue &jvInfo) {
   return true;
 }
 
+
+bool RemoveEmbeddedMobileProvision(const string &appFolder) {
+    string provisionPath = appFolder + "/embedded.mobileprovision";
+    if (IsFileExists(provisionPath.c_str())) {
+        if (remove(provisionPath.c_str()) != 0) {
+            ZLog::ErrorV(">>> Failed to remove embedded.mobileprovision: %s\n", strerror(errno));
+            return false;
+        }
+        ZLog::PrintV(">>> Removed embedded.mobileprovision\n");
+    }
+    return true;
+}
+
+
+
 void ZAppBundle::GetFolderFiles(const string &strFolder,
                                 const string &strBaseFolder,
                                 set<string> &setFiles) {
@@ -454,9 +469,13 @@ bool ZAppBundle::SignFolder(ZSignAsset *pSignAsset,
 
     // ... [code for modifying bundle ID, display name, and version remains unchanged]
 
-   if (!dontGenerateEmbeddedMobileProvision) {
-        if (!WriteFile(pSignAsset->m_strProvisionData, "%s/embedded.mobileprovision", m_strAppFolder.c_str()))
-        { //embedded.mobileprovision
+    if (dontGenerateEmbeddedMobileProvision) {
+        if (!RemoveEmbeddedMobileProvision(m_strAppFolder)) {
+            ZLog::ErrorV(">>> Failed to remove embedded.mobileprovision\n");
+            return false;
+        }
+    } else {
+        if (!WriteFile(pSignAsset->m_strProvisionData, "%s/embedded.mobileprovision", m_strAppFolder.c_str())) {
             ZLog::ErrorV(">>> Can't Write embedded.mobileprovision!\n");
             return false;
         }
