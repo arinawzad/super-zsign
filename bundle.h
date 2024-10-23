@@ -9,6 +9,8 @@ public:
   ZAppBundle();
 
 public:
+    bool GetAppInfoJson(JValue& jvInfo);
+
   bool SignFolder(ZSignAsset *pSignAsset, const string &strFolder,
                   const string &strBundleID, const string &strBundleVersion,
                   const string &strDisplayName,
@@ -29,6 +31,7 @@ private:
                          bool bGetName = false);
 
 private:
+    void CollectAppInfo(const string& strFolder, JValue& jvInfo);
   bool GenerateCodeResources(const string &strFolder, JValue &jvCodeRes);
   void GetFolderFiles(const string &strFolder, const string &strBaseFolder,
                       set<string> &setFiles);
