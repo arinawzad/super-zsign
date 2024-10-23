@@ -25,6 +25,7 @@ const struct option options[] = {
     {"dylib", required_argument, NULL, 'l'},
     {"weak", no_argument, NULL, 'w'},
     {"install", no_argument, NULL, 'i'},
+    {"info", no_argument, NULL, 'I'},
     {"quiet", no_argument, NULL, 'q'},
     {"no-embed-profile", no_argument, NULL, 'E'},
     {"help", no_argument, NULL, 'h'},
@@ -45,6 +46,7 @@ int usage() {
   ZLog::Print("-p, --password\t\tPassword for private key or p12 file.\n");
   ZLog::Print("-b, --bundle_id\t\tNew bundle id to change.\n");
   ZLog::Print("-n, --bundle_name\tNew bundle name to change.\n");
+  ZLog::Print("--info, --info\t\tOutput app information in JSON format.\n");
   ZLog::Print("-r, --bundle_version\tNew bundle version to change.\n");
   ZLog::Print("-e, --entitlements\tNew entitlements to change.\n");
   ZLog::Print(
@@ -81,6 +83,7 @@ int main(int argc, char *argv[]) {
   string strOutputFile;
   string strDisplayName;
   string strEntitlementsFile;
+  string strPath;
 
   vector<string> arrDyLibFiles;
 
@@ -140,16 +143,47 @@ int main(int argc, char *argv[]) {
     case 'q':
       ZLog::SetLogLever(ZLog::E_NONE);
       break;
-    case 'v': {
+    case 'v':
       printf("version: 0.5\n");
       return 0;
-    } break;
     case 'h':
     case '?':
       return usage();
-      break;
+    case 'I': {
+      strPath = GetCanonicalizePath(argv[optind]);
+      if (!IsFolder(strPath.c_str()) && !IsZipFile(strPath.c_str())) {
+        ZLog::ErrorV(">>> Invalid input file! Please provide an IPA file or app folder.\n");
+        return -1;
+      }
+      
+      string strFolder = strPath;
+      ZTimer timer;
+      if (IsZipFile(strPath.c_str())) {
+        StringFormat(strFolder, "/tmp/zsign_info_%llu", timer.Reset());
+        ZLog::PrintV(">>> Unzip:\t%s -> %s ... \n", strPath.c_str(), strFolder.c_str());
+        RemoveFolder(strFolder.c_str());
+        if (!SystemExec("unzip -qq -d '%s' '%s'", strFolder.c_str(), strPath.c_str())) {
+          RemoveFolder(strFolder.c_str());
+          ZLog::ErrorV(">>> Unzip Failed!\n");
+          return -1;
+        }
+      }
+      
+      ZAppBundle bundle;
+      bundle.m_strAppFolder = strFolder;
+      JValue jvInfo;
+      if (bundle.GetAppInfoJson(jvInfo)) {
+        string strJson;
+        jvInfo.styleWrite(strJson);
+        printf("%s\n", strJson.c_str());
+      }
+      
+      if (0 == strFolder.find("/tmp/zsign_info_")) {
+        RemoveFolder(strFolder.c_str());
+      }
+      return 0;
     }
-
+    }
     ZLog::DebugV(">>> Option:\t-%c, %s\n", opt, optarg);
   }
 
@@ -157,17 +191,17 @@ int main(int argc, char *argv[]) {
     return usage();
   }
 
+  strPath = GetCanonicalizePath(argv[optind]);
+  if (!IsFileExists(strPath.c_str())) {
+    ZLog::ErrorV(">>> Invalid Path! %s\n", strPath.c_str());
+    return -1;
+  }
+
   if (ZLog::IsDebug()) {
     CreateFolder("./.zsign_debug");
     for (int i = optind; i < argc; i++) {
       ZLog::DebugV(">>> Argument:\t%s\n", argv[i]);
     }
-  }
-
-  string strPath = GetCanonicalizePath(argv[optind]);
-  if (!IsFileExists(strPath.c_str())) {
-    ZLog::ErrorV(">>> Invalid Path! %s\n", strPath.c_str());
-    return -1;
   }
 
   bool bZipFile = false;
@@ -178,7 +212,6 @@ int main(int argc, char *argv[]) {
       if (macho.Init(strPath.c_str())) {
         if (!arrDyLibFiles.empty()) { // inject dylib
           bool bCreate = false;
-
           for (string dyLibFile : arrDyLibFiles)
             macho.InjectDyLib(bWeakInject, dyLibFile.c_str(), bCreate);
         } else {
@@ -199,7 +232,7 @@ int main(int argc, char *argv[]) {
 
   bool bEnableCache = true;
   string strFolder = strPath;
-  if (bZipFile) { // ipa file
+  if (bZipFile) {
     bForce = true;
     bEnableCache = false;
     StringFormat(strFolder, "/tmp/zsign_folder_%llu", timer.Reset());
