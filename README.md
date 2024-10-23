@@ -180,6 +180,7 @@ options:
 -p, --password          Password for private key or p12 file.
 -b, --bundle_id         New bundle id to change.
 -n, --bundle_name       New bundle name to change.
+--info , --info              Output app information in JSON format.
 -r, --bundle_version    New bundle version to change.
 -e, --entitlements      New entitlements to change.
 -z, --zip_level         Compressed level when output the ipa file. (0-9)
