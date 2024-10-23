@@ -13,6 +13,79 @@ ZAppBundle::ZAppBundle()
 }
 
 
+
+
+bool ZAppBundle::GetAppInfoJson(JValue& jvInfo) {
+    if (!FindAppFolder(m_strAppFolder, m_strAppFolder)) {
+        ZLog::ErrorV(">>> Can't Find App Folder! %s\n", m_strAppFolder.c_str());
+        return false;
+    }
+
+    jvInfo["path"] = m_strAppFolder;
+    
+    // Get main app info
+    if (!GetSignFolderInfo(m_strAppFolder, jvInfo, true)) {
+        ZLog::ErrorV(">>> Can't Get App Info from Info.plist! %s\n", m_strAppFolder.c_str());
+        return false;
+    }
+
+    // Get all embedded frameworks, plugins, and extensions
+    JValue jvComponents;
+    CollectAppInfo(m_strAppFolder, jvComponents);
+    if (!jvComponents.isNull()) {
+        jvInfo["components"] = jvComponents;
+    }
+
+    // Check for provisioning profile
+    string provPath = m_strAppFolder + "/embedded.mobileprovision";
+    jvInfo["has_provisioning_profile"] = IsFileExists(provPath.c_str());
+
+    
+
+    return true;
+}
+
+
+void ZAppBundle::CollectAppInfo(const string& strFolder, JValue& jvInfo) {
+    DIR* dir = opendir(strFolder.c_str());
+    if (NULL != dir) {
+        dirent* ptr = readdir(dir);
+        while (NULL != ptr) {
+            if (0 != strcmp(ptr->d_name, ".") && 0 != strcmp(ptr->d_name, "..")) {
+                if (DT_DIR == ptr->d_type) {
+                    string strSubFolder = strFolder + "/" + ptr->d_name;
+                    
+                    // Check if it's a framework, plugin, or app extension
+                    if (IsPathSuffix(strSubFolder, ".framework") ||
+                        IsPathSuffix(strSubFolder, ".appex") ||
+                        IsPathSuffix(strSubFolder, ".app")) {
+                            
+                        JValue jvComponent;
+                        if (GetSignFolderInfo(strSubFolder, jvComponent, true)) {
+                            string type = "unknown";
+                            if (IsPathSuffix(strSubFolder, ".framework")) {
+                                type = "framework";
+                            } else if (IsPathSuffix(strSubFolder, ".appex")) {
+                                type = "extension";
+                            } else if (IsPathSuffix(strSubFolder, ".app")) {
+                                type = "application";
+                            }
+                            jvComponent["type"] = type;
+                            jvInfo.push_back(jvComponent);
+                        }
+                    }
+                    CollectAppInfo(strSubFolder, jvInfo);
+                }
+            }
+            ptr = readdir(dir);
+        }
+        closedir(dir);
+    }
+}
+
+
+
+
 bool ZAppBundle::FindAppFolder(const string &strFolder, string &strAppFolder) {
   if (IsPathSuffix(strFolder, ".app") || IsPathSuffix(strFolder, ".appex")) {
     strAppFolder = strFolder;
