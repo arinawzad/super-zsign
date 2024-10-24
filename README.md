@@ -229,6 +229,17 @@ options:
 ```bash
 ./zsign -w -l "@executable_path/demo.dylib" demo.app/execute
 ```
+
+9. Inject view app info.
+```bash
+./zsign --info app.ipa
+```
+
+2. Don't generate embedded mobile provision.
+```bash
+./zsign -k -E p12file.p12 -m mpfile.mobileprovison -o output.ipa -z 9 demo.ipa
+```
+
 ## How to sign quickly?
 
 You can unzip the ipa file at first, and then using zsign to sign folder with assets.
