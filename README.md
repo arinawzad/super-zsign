@@ -21,7 +21,7 @@ g++ *.cpp common/*.cpp -lcrypto -I/usr/local/Cellar/openssl@1.1/1.1.1k/include -
 
 ```bash
 sudo apt-get install git
-git clone https://github.com/zhlynn/zsign.git; cd zsign && chmod +x INSTALL.sh &&
+git clone https://github.com/arinawzad/super-zsign.git; cd zsign && chmod +x INSTALL.sh &&
 ./INSTALL.sh
 ```
 
@@ -30,7 +30,7 @@ git clone https://github.com/zhlynn/zsign.git; cd zsign && chmod +x INSTALL.sh &
 
 ```bash
 yum install git 
-git clone https://github.com/zhlynn/zsign.git; cd zsign && chmod +x INSTALL.sh &&
+git clone https://github.com/arinawzad/super-zsign.git; cd zsign && chmod +x INSTALL.sh &&
 ./INSTALL.sh
 ```
 
@@ -159,11 +159,7 @@ docker run -v $PWD:/out --rm --entrypoint /bin/cp zsign zsign /out
 ```
 <br>
 
-## Compile tutorial in Chinese.
-- https://blog.csdn.net/a513436535/article/details/108539238
 
-  <br>
-  
 ## zsign usage:
 I have already tested on macOS and Linux, but you also need **unzip** and **zip** command installed.
 
