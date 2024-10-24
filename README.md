@@ -235,7 +235,7 @@ options:
 ./zsign --info app.ipa
 ```
 
-2. Don't generate embedded mobile provision.
+10. Don't generate embedded mobile provision.
 ```bash
 ./zsign -k -E p12file.p12 -m mpfile.mobileprovison -o output.ipa -z 9 demo.ipa
 ```
